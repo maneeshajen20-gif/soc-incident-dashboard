@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Workspace: {{ incident['incident_id'] }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <a href="/" style="text-decoration: none; color: #7f8c8d;">← Back to Dashboard</a>  
+        <h1 style="margin-bottom: 5px;">{{ incident['incident_id'] }}: {{ incident['title'] }}</h1>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="workspace-grid" style="margin-top: 20px;">
+            <!-- LEFT COLUMN -->
+            <div>
+                <!-- Overview Card -->
+                <div class="card">
+                    <h2>Incident Overview</h2>
+                    <p><strong>Severity:</strong> <span class="badge badge-{{ incident['severity'] }}">{{ incident['severity'] }}</span></p>
+                    <p><strong>Status:</strong> <span class="badge badge-{{ incident['status'] }}">{{ incident['status'] }}</span></p>
+                    <p><strong>Description:</strong><br>{{ incident['description'] }}</p>
+                    
+                    <form action="/update_status/{{ incident['incident_id'] }}" method="POST" style="margin-top: 15px; display: flex; gap: 10px;">
+                        <select name="status" style="margin: 0; width: auto;">
+                            <option value="NEW" {% if incident['status'] == 'NEW' %}selected{% endif %}>NEW</option>
+                            <option value="INVESTIGATING" {% if incident['status'] == 'INVESTIGATING' %}selected{% endif %}>INVESTIGATING</option>
+                            <option value="CONTAINED" {% if incident['status'] == 'CONTAINED' %}selected{% endif %}>CONTAINED</option>
+                            <option value="RESOLVED" {% if incident['status'] == 'RESOLVED' %}selected{% endif %}>RESOLVED</option>
+                            <option value="CLOSED" {% if incident['status'] == 'CLOSED' %}selected{% endif %}>CLOSED</option>
+                        </select>
+                        <button type="submit">Update Workflow</button>
+                    </form>
+                </div>
+
+                <!-- Evidence Card -->
+                <div class="card">
+                    <h2>Collected Evidence & Integrity</h2>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <div>
+                            <strong>{{ evidence|length }}</strong> Files | 
+                            <span style="color: #27ae60;">✓ {{ verified }} Verified</span> | 
+                            <span style="color: #c0392b;">✗ {{ compromised }} Compromised</span>
+                        </div>
+                        <div>
+                            <a href="/collect/{{ incident['incident_id'] }}"><button>1. Collect Evidence</button></a>
+                            <a href="/verify/{{ incident['incident_id'] }}"><button>2. Verify Integrity</button></a>
+                            <a href="/report/{{ incident['incident_id'] }}"><button>3. Generate PDF</button></a>
+                        </div>
+                    </div>
+                    
+                    {% if evidence %}
+                    <table>
+                        <tr><th>Filename</th><th>Original SHA-256</th><th>Status</th></tr>
+                        {% for ev in evidence %}
+                        <tr>
+                            <td><code>{{ ev['filename'] }}</code></td>
+                            <td><code style="font-size: 10px;">{{ ev['original_sha256'][:20] }}...</code></td>
+                            <td>
+                                {% if ev['status'] == 'VERIFIED' %}
+                                    <span class="badge badge-RESOLVED">✓ VERIFIED</span>
+                                {% else %}
+                                    <span class="badge badge-CRITICAL">✗ COMPROMISED</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                    {% else %}
+                        <p style="color: #7f8c8d; font-style: italic;">No evidence collected yet.</p>
+                    {% endif %}
+                </div>
+
+                <!-- IOC Card -->
+                <div class="card">
+                    <h2>Indicators of Compromise (IOCs)</h2>
+                    {% if iocs %}
+                    <table>
+                        <tr><th>Type</th><th>Value</th><th>Description</th></tr>
+                        {% for ioc in iocs %}
+                        <tr>
+                            <td><strong>{{ ioc['ioc_type'] }}</strong></td>
+                            <td><code>{{ ioc['value'] }}</code></td>
+                            <td>{{ ioc['description'] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                    {% endif %}
+                    
+                    <form action="/add_ioc/{{ incident['incident_id'] }}" method="POST" style="display: flex; gap: 10px; margin-top: 15px;">
+                        <select name="ioc_type" style="margin: 0; flex: 1;">
+                            <option value="IP">IP Address</option>
+                            <option value="DOMAIN">Domain</option>
+                            <option value="HASH">File Hash</option>
+                            <option value="USER">Username</option>
+                            <option value="PROCESS">Process</option>
+                        </select>
+                        <input type="text" name="value" placeholder="Value (e.g. 192.168.1.50)" style="margin: 0; flex: 2;" required>
+                        <input type="text" name="description" placeholder="Notes" style="margin: 0; flex: 2;">
+                        <button type="submit">Record IOC</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN -->
+            <div>
+                <div class="card">
+                    <h2>Incident Timeline</h2>
+                    <div class="timeline">
+                        {% for event in timeline %}
+                        <div class="timeline-event">
+                            <span class="time">{{ event['timestamp'] }}</span>
+                            <span class="desc">{{ event['event'] }}</span>
+                        </div>
+                        {% else %}
+                            <p style="color: #7f8c8d;">No timeline events recorded.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

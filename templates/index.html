@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOC Incident Center</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="container">
+        
+        <h1>SOC DASHBOARD</h1>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Total Incidents</h3>
+                <div class="value">{{ stats.total }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>High Severity</h3>
+                <div class="value" style="color: #e74c3c;">{{ stats.high_severity }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Investigating</h3>
+                <div class="value" style="color: #f39c12;">{{ stats.investigating }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Resolved</h3>
+                <div class="value" style="color: #2ecc71;">{{ stats.resolved }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="header-container">
+        <h1>SOC INCIDENT CENTER</h1>
+        <hr>
+    </div>
+    
+    <!-- This new container splits the page -->
+    <div class="dashboard-container">
+        
+        <!-- Left Column: Form -->
+        <div class="form-section">
+            <h2>Create New Incident</h2>
+            <form action="/add" method="POST">
+                <label>Incident ID:</label>
+                <input type="text" name="incident_id" placeholder="INC-002" required><br><br>
+                
+                <label>Title:</label>
+                <input type="text" name="title" required><br><br>
+                
+                <label>Severity:</label>
+                <select name="severity">
+                    <option value="LOW">Low</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="HIGH">High</option>
+                    <option value="CRITICAL">Critical</option>
+                </select><br><br>
+                
+                <label>Status:</label>
+                <select name="status">
+                    <option value="NEW">New</option>
+                    <option value="INVESTIGATING">Investigating</option>
+                    <option value="CONTAINED">Contained</option>
+                    <option value="RESOLVED">Resolved</option>
+                    <option value="CLOSED">Closed</option>
+                </select><br><br>
+                
+                <label>Description:</label><br>
+                <textarea name="description" rows="4" cols="50"></textarea><br><br>
+                
+                <button type="submit">Create Incident</button>
+            </form>
+        </div>
+        
+        <!-- Right Column: Table -->
+        <div class="table-section">
+            <h2>Active Incidents Overview</h2>
+            <table border="1" cellpadding="10" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Title</th>
+                        <th>Severity</th>
+                        <th>Status</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for incident in incidents %}
+                    <tr>
+                        <td><a href="/incident/{{ incident['incident_id'] }}">{{ incident['incident_id'] }}</a></td>
+                        <td>{{ incident['title'] }}</td>
+                        <td><strong>{{ incident['severity'] }}</strong></td>
+                        <td>{{ incident['status'] }}</td>
+                        <td>{{ incident['description'] }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6">No active incidents found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</body>
+</html>
